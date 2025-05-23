@@ -1,0 +1,54 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>GrupoParadigmas</groupId>
+  <artifactId>lab-2-paradigmas</artifactId>
+  <version>1.0.0</version>
+
+  <!-- AÑADE ESTA SECCIÓN DE PROPIEDADES -->
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>17</maven.compiler.source>   <!-- O 11, o 21 si quieres usar lo último -->
+    <maven.compiler.target>17</maven.compiler.target>   <!-- Debe coincidir con el source -->
+  </properties>
+
+  <dependencies>
+    <!-- ... tus dependencias ... -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.13.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20200518</version>
+    </dependency>
+    <dependency>
+      <groupId>com.jakewharton.fliptables</groupId>
+      <artifactId>fliptables</artifactId>
+      <version>1.1.1</version>
+    </dependency>
+  </dependencies>
+
+  <!-- OPCIONALMENTE, puedes ser más explícito con la configuración del plugin -->
+  <!-- aunque las propiedades anteriores suelen ser suficientes -->
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version> <!-- O una versión más reciente como 3.10.1 o 3.11.0 -->
+        <configuration>
+          <source>17</source> <!-- O la versión que elegiste arriba -->
+          <target>17</target> <!-- O la versión que elegiste arriba -->
+        </configuration>
+      </plugin>
+      <!-- Otros plugins que puedas tener -->
+    </plugins>
+  </build>
+
+</project>
