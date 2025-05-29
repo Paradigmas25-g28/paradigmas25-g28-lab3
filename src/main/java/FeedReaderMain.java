@@ -1,7 +1,9 @@
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import utils.AnsiColors;
 import feed.Article;
 import feed.Feed;
 import httpRequest.httpRequester;
@@ -14,146 +16,49 @@ import parser.SubscriptionParser;
 import subscription.SingleSubscription;
 import subscription.Subscription;
 
+import javax.ws.rs.client.Entity;
+
+import org.apache.spark.api.java.function.Function;
+
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.SparkSession;
+
 public class FeedReaderMain {
 
-  private static void printHelp() {
-    System.out.println("Please, call this program in correct way: FeedReader [-ne]");
-  }
-
   public static void main(String[] args) {
-    System.out.println("************* FeedReader version 1.0 *************");
+    SubscriptionParser subparser = new SubscriptionParser();
+    subparser.parse("config/subscriptions.json");
 
-    if (args.length == 0) {
+    SparkSession spark = SparkSession
+        .builder()
+        .appName("FeedReader")
+        .master("local[*]")
+        .getOrCreate();
+    JavaSparkContext sc = new JavaSparkContext(spark.sparkContext());
 
-      List<Feed> feedl = feedsFromSubscriptions("config/subscriptions.json");
+    JavaRDD<SingleSubscription> subs = sc.parallelize(subparser.getSubscriptions());
 
-      for (Feed xfeed : feedl) {
-        xfeed.prettyPrint();
-      }
+    Function<SingleSubscription, Feed> buildFeed = singSub -> Feed.buildFeed(singSub);
+    JavaRDD<Feed> feed = subs.map(buildFeed);
 
+    List<Feed> feedList = feed.collect();
 
-    } else if (args.length == 1) {
+    // Print debugg
+    System.out.println(AnsiColors.YELLOW + AnsiColors.BLUE_BACKGROUND + feedList.toString() + AnsiColors.RESET);
 
-      List <Feed> feedl = feedsFromSubscriptions("config/subscriptions.json");
+    JavaRDD<Feed> feeds = sc.parallelize(feedList);
 
-      // INFO: Llamar a la heuristica para que compute las entidades nombradas de cada
-      // articulos del feed
-      QuickHeuristic qh = new QuickHeuristic();
-      for (Feed feed : feedl) {
+    // QuickHeuristic qh = new QuickHeuristic(); // Hardecode
+    // Function<Feed, Map<String, Integer>> buildCountDict = feedprime ->
+    // TableOfNamedEntity.buildCountDict(feedprime, qh);
+    // JavaRDD<Map<String, Integer>> dicts = feeds.map(buildCountDict);
+    //
+    // Map<String, Integer> finalDict = dicts.reduce((d1, d2) ->
+    // TableOfNamedEntity.mergeCountDicts(d1, d2));
 
-        TableOfNamedEntity tablita = new TableOfNamedEntity();
-        tablita.TheRealFunction(feed, qh);
-
-        // INFO: LLamar al prettyPrint de la tabla de entidades nombradas del feed.
-
-        tablita.prettyPrint();
-      }
-
-    } else if (args.length == 2) {
-      
-      List<Feed> feedl = feedsFromSubscriptions("config/subscriptions.json");
-
-      // INFO: Llamar a la heuristica para que compute las entidades nombradas de cada
-      // articulos del feed
-      if (args[1].equals("-qh")) {
-        QuickHeuristic qh = new QuickHeuristic();
-        for (Feed feed : feedl) {
-
-          TableOfNamedEntity tablita = new TableOfNamedEntity();
-          tablita.TheRealFunction(feed, qh);
-
-          // INFO: LLamar al prettyPrint de la tabla de entidades nombradas del feed.
-
-          tablita.prettyPrint();
-        }
-      } else if (args[1].equals("-rh")) {
-        RandomHeuristic rh = new RandomHeuristic();
-        for (Feed feed : feedl) {
-
-          TableOfNamedEntity tablita = new TableOfNamedEntity();
-          tablita.TheRealFunction(feed, rh);
-
-          // INFO: LLamar al prettyPrint de la tabla de entidades nombradas del feed.
-
-          tablita.prettyPrint();
-        }
-      } else {
-        System.err.println("Segundo argumento no valido");
-        return;
-      }
-
-    } else {
-      printHelp();
-    }
-  }
-
-  private static List<Feed> feedsFromSubscriptions(String Path) {
-
-    List<Feed> feeds = new ArrayList<>();
-    // INFO: Leer el archivo de suscription por defecto;
-    SubscriptionParser parser = new SubscriptionParser();
-    parser.parse(Path);
-
-    // INFO: Llamar al httpRequester para obtenr el feed del servidor
-    httpRequester requester = new httpRequester();
-
-    for (SingleSubscription subscription : parser.getSubscriptions()) {
-      // INFO: Llamar al Parser especifico para extrar los datos necesarios por la
-      // aplicacion
-      String urlType = subscription.getUrlType().toLowerCase();
-
-      for (String topic : subscription.getUrlParams()) {
-        try {
-
-          if (urlType.equals("rss")) {
-            String urlFormat = subscription.getUrl();
-            String finalUrl = String.format(urlFormat, topic);
-
-            System.out.println("Descargando RSS desde: " + finalUrl);
-            File rssXml = requester.getFeedRssToFile(finalUrl);
-
-            RssParser rssParser = new RssParser();
-            rssParser.parse(rssXml.getPath());
-
-            String siteName = subscription.getUrlType().toUpperCase() + " - " + topic;
-
-            // INFO: Llamar al constructor de Feed
-            Feed feed = new Feed(siteName);
-
-            for (Article article : rssParser.getArticles()) {
-              feed.addArticle(article);
-            }
-
-            feeds.add(feed);
-
-          } else if (urlType.equals("reddit")) {
-            String urlFormat = subscription.getUrl();
-            String finalUrl = String.format(urlFormat, topic);
-
-            System.out.println("Descargando Reddit desde: " + finalUrl);
-            File rssXml = requester.getFeedRssToFile(finalUrl);
-
-            RedditParser redditParser = new RedditParser();
-            redditParser.parse(rssXml.getPath());
-
-            String siteName = subscription.getUrlType().toUpperCase() + " - " + topic;
-
-            // INFO: Llamar al constructor de Feed
-            Feed feed = new Feed(siteName);
-
-            for (Article article : redditParser.getArticles()) {
-              feed.addArticle(article);
-            }
-
-            feeds.add(feed);
-          }
-        } catch (Exception e) {
-          System.err.println("Error al procesar el feed Reddit para el topic: " + topic);
-          e.printStackTrace();
-        }
-      }
-    }     
-    return feeds;
+    // hay que imprimir finalDict para terminar
+    sc.close();
+    spark.stop();
   }
 }
-

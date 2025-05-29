@@ -1,54 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>GrupoParadigmas</groupId>
-  <artifactId>lab-2-paradigmas</artifactId>
-  <version>1.0.0</version>
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>GrupoParadigmas</groupId>
+    <artifactId>lab-2-paradigmas</artifactId>
+    <version>1.0.0</version>
 
-  <!-- AÑADE ESTA SECCIÓN DE PROPIEDADES -->
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>17</maven.compiler.source>   <!-- O 11, o 21 si quieres usar lo último -->
-    <maven.compiler.target>17</maven.compiler.target>   <!-- Debe coincidir con el source -->
-  </properties>
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-  <dependencies>
-    <!-- ... tus dependencias ... -->
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.13.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.json</groupId>
-      <artifactId>json</artifactId>
-      <version>20200518</version>
-    </dependency>
-    <dependency>
-      <groupId>com.jakewharton.fliptables</groupId>
-      <artifactId>fliptables</artifactId>
-      <version>1.1.1</version>
-    </dependency>
-  </dependencies>
+        <!-- Versiones de dependencias -->
+        <spark.version>3.5.5</spark.version>
+        <scala.binary.version>2.13</scala.binary.version> <!-- Asegúrate que coincida con tus JARs de
+        Spark (_2.13) -->
+        <hadoop.version>3.3.6</hadoop.version> <!-- Versión de Hadoop compatible con Spark 3.5.x -->
+        <junit.version>4.13.2</junit.version>
+        <json.version>20231013</json.version> <!-- Versión más reciente de org.json -->
+        <jsoup.version>1.17.2</jsoup.version>
+        <fliptables.version>1.1.1</fliptables.version>
+        <slf4j.version>1.7.36</slf4j.version> <!-- o considera 2.0.7+ si es necesario -->
+    </properties>
 
-  <!-- OPCIONALMENTE, puedes ser más explícito con la configuración del plugin -->
-  <!-- aunque las propiedades anteriores suelen ser suficientes -->
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version> <!-- O una versión más reciente como 3.10.1 o 3.11.0 -->
-        <configuration>
-          <source>17</source> <!-- O la versión que elegiste arriba -->
-          <target>17</target> <!-- O la versión que elegiste arriba -->
-        </configuration>
-      </plugin>
-      <!-- Otros plugins que puedas tener -->
-    </plugins>
-  </build>
+    <dependencies>
+        <!-- JUnit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
 
+        <!-- org.json -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>${json.version}</version>
+        </dependency>
+
+        <!-- Jsoup HTML parser -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>${jsoup.version}</version>
+        </dependency>
+
+        <!-- Fliptables -->
+        <dependency>
+            <groupId>com.jakewharton.fliptables</groupId>
+            <artifactId>fliptables</artifactId>
+            <version>${fliptables.version}</version>
+        </dependency>
+
+        <!-- Apache Spark Core -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+        </dependency>
+
+        <!-- Apache Spark SQL -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+        </dependency>
+
+        <!-- Dependencias de Hadoop Cliente -->
+        <!--
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client-api</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client-runtime</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
+        -->
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
+        <!-- Opcional, si necesitas hadoop-common explícitamente y para evitar conflictos -->
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+            <version>${hadoop.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.protobuf</groupId>
+                    <artifactId>protobuf-java</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+
+        <!-- SLF4J Simple (para logging básico) -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.version}</version>
+            <!-- <scope>runtime</scope> --> <!-- A menudo se usa en runtime o test, pero para apps simples está
+            bien compile -->
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Compiler plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <compilerArgs>
+                        <arg>-Xlint:unchecked</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+
+            <!-- Exec plugin to run your Java class -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version> <!-- O considera 3.2.0 si está disponible y es estable -->
+                <configuration>
+                    <mainClass>FeedReaderMain</mainClass> <!-- Especifica tu clase principal aquí -->
+                    <!-- <cleanupDaemonThreads>false</cleanupDaemonThreads> --> <!-- Podría ayudar con los hilos que no
+                    mueren, pero lo ideal es arreglar el código de Spark -->
+                    <systemProperties>
+                        <systemProperty>
+                            <!-- La clave correcta suele ser spark.hadoop.security.authentication o
+                            hadoop.security.authentication -->
+                            <!-- Si la tuya funcionaba, déjala, si no, prueba esta: -->
+                            <key>hadoop.security.authentication</key>
+                            <!-- <key>spark.hadoop.hadoop.security.authentication</key> -->
+                            <value>simple</value>
+                        </systemProperty>
+                    </systemProperties>
+                    <jvmArguments>
+                        <jvmArgument>--add-exports=java.base/sun.nio.ch=ALL-UNNAMED</jvmArgument>
+                        <!-- Considera añadir memoria si es necesario, ej:
+                        <jvmArgument>-Xmx2g</jvmArgument> -->
+                    </jvmArguments>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

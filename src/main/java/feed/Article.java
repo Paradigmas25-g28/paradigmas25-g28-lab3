@@ -1,5 +1,6 @@
 package feed;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -10,7 +11,7 @@ import namedEntity.heuristic.Heuristic;
 import utils.AnsiColors;
 /*Esta clase modela el contenido de un articulo (ie, un item en el caso del rss feed) */
 
-public class Article {
+public class Article implements Serializable {
   private String title;
   private String text;
   private Date publicationDate;
@@ -72,7 +73,7 @@ public class Article {
     }
     return null;
   }
-  
+
   public void computeNamedEntities(Heuristic h) {
     String text = this.getTitle() + " " + this.getText();
 

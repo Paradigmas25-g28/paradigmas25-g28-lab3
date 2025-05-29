@@ -1,76 +1,77 @@
 package subscription;
 
+import java.io.Serializable;
 import java.security.cert.URICertStoreParameters;
 import java.util.ArrayList;
 import java.util.List;
 
 /*Esta clse abstrae el contenido de una sola suscripcion que ocurre en lista de suscripciones que figuran en el archivo de suscrpcion(json) */
-public class SingleSubscription {
+public class SingleSubscription implements Serializable {
 
-    private String url;
-    private List<String> urlParams;
-    private String urlType;
+  private String url;
+  private List<String> urlParams;
+  private String urlType;
 
-    public SingleSubscription(String url, List<String> urlParams, String urlType) {
-        super();
-        this.url = url;
-        this.urlParams = urlParams;
-        this.urlType = urlType;
-    }
+  public SingleSubscription(String url, List<String> urlParams, String urlType) {
+    super();
+    this.url = url;
+    this.urlParams = urlParams;
+    this.urlType = urlType;
+  }
 
-    public String getUrl() {
-        return url;
-    }
+  public String getUrl() {
+    return url;
+  }
 
-    public void setUrl(String url) {
-        this.url = url;
-    }
+  public void setUrl(String url) {
+    this.url = url;
+  }
 
-    public List<String> getUrlParams() {
-        return urlParams;
-    }
+  public List<String> getUrlParams() {
+    return urlParams;
+  }
 
-    public String getUrlParams(int i) {
-        return this.urlParams.get(i);
-    }
+  public String getUrlParams(int i) {
+    return this.urlParams.get(i);
+  }
 
-    public void setUrlParams(String urlParam) {
-        this.urlParams.add(urlParam);
-    }
+  public void setUrlParams(String urlParam) {
+    this.urlParams.add(urlParam);
+  }
 
-    public int getUrlParamsSize() {
-        return urlParams.size();
-    }
+  public int getUrlParamsSize() {
+    return urlParams.size();
+  }
 
-    public String getUrlType() {
-        return urlType;
-    }
+  public String getUrlType() {
+    return urlType;
+  }
 
-    public void setUrlType(String urlType) {
-        this.urlType = urlType;
-    }
+  public void setUrlType(String urlType) {
+    this.urlType = urlType;
+  }
 
-    @Override
-    public String toString() {
-        return "{url=" + getUrl() + ", urlParams=" + getUrlParams().toString() + ", urlType=" + getUrlType() + "}";
-    }
+  @Override
+  public String toString() {
+    return "{url=" + getUrl() + ", urlParams=" + getUrlParams().toString() + ", urlType=" + getUrlType() + "}";
+  }
 
-    public void prettyPrint() {
-        System.out.println(this.toString());
-    }
+  public void prettyPrint() {
+    System.out.println(this.toString());
+  }
 
-    public String getFeedToRequest(int i) {
-        return this.getUrl().replace("%s", this.getUrlParams(i));
-    }
+  public String getFeedToRequest(int i) {
+    return this.getUrl().replace("%s", this.getUrlParams(i));
+  }
 
-    public static void main(String[] args) {
-        System.out.println("SingleSubscriptionClass");
-        SingleSubscription s = new SingleSubscription("https://rss.nytimes.com/services/xml/rss/nyt/%s.xml", null,
-                "rss");
-        s.setUrlParams("Business");
-        s.setUrlParams("Technology");
-        System.out.println(s.getFeedToRequest(0));
-        s.prettyPrint();
-    }
+  public static void main(String[] args) {
+    System.out.println("SingleSubscriptionClass");
+    SingleSubscription s = new SingleSubscription("https://rss.nytimes.com/services/xml/rss/nyt/%s.xml", null,
+        "rss");
+    s.setUrlParams("Business");
+    s.setUrlParams("Technology");
+    System.out.println(s.getFeedToRequest(0));
+    s.prettyPrint();
+  }
 
 }
