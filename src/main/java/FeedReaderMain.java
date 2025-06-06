@@ -115,13 +115,50 @@ public class FeedReaderMain {
         SubscriptionParser subparser = new SubscriptionParser();
         String subscriptionsFilePath = "config/subscriptions.json"; // Path por defecto
 
-        // Permitir que el path del archivo de suscripciones se pase como argumento
-        if (args.length > 0) {
-            subscriptionsFilePath = args[0];
-            System.out.println(AnsiColors.BLUE + "Usando archivo de suscripciones: " + subscriptionsFilePath + AnsiColors.RESET);
+        String heuristicType = "DEFAULT"; // "DEFAULT" significa que no se usa ni -qh ni -rh
+    
+        if (args.length == 0) {
+        // No hay argumentos, se usan los valores por defecto.
+        // heuristicType ya es "DEFAULT".
+            System.out.println("Modo de ejecución: Por defecto (sin heurística específica).");
+        
+        } else if (args.length == 1) {
+        // Un solo argumento, debe ser la heurística.
+        if (args[0].equalsIgnoreCase("-qh")) {
+            heuristicType = "QUICK";
+        } else if (args[0].equalsIgnoreCase("-rh")) {
+            heuristicType = "RANDOM";
         } else {
-            System.out.println(AnsiColors.BLUE + "Usando archivo de suscripciones por defecto: " + subscriptionsFilePath + AnsiColors.RESET);
+            // Si no es una heurística válida, lo consideramos un error.
+            System.err.println("Argumento no válido: " + args[0]);
+            System.err.println("Use -qh para QuickHeuristic o -rh para RandomHeuristic.");
+            return; // Termina la ejecución
         }
+        
+        } else if (args.length == 2) {
+        // Dos argumentos: el primero es la ruta, el segundo la heurística.
+        subscriptionsFilePath = args[0];
+        if (args[1].equalsIgnoreCase("-qh")) {
+            heuristicType = "QUICK";
+        } else if (args[1].equalsIgnoreCase("-rh")) {
+            heuristicType = "RANDOM";
+        } else {
+            System.err.println("Segundo argumento no válido: " + args[1]);
+            System.err.println("Use -qh o -rh.");
+            return;
+        }
+        } else {
+        // Demasiados argumentos.
+        System.err.println("Error: Demasiados argumentos.");
+        System.err.println("Uso: java FeedReaderMain [ruta_a_suscripciones] [-qh | -rh]");
+        return;
+        }   
+    
+        System.out.println(AnsiColors.BLUE + "Usando archivo de suscripciones: " + subscriptionsFilePath + AnsiColors.RESET);
+        System.out.println(AnsiColors.BLUE + "Modo de detección de entidades: " + heuristicType + AnsiColors.RESET);
+
+        // Hacemos la variable final para poder usarla dentro de la lambda de Spark
+        final String finalHeuristicType = heuristicType;
         subparser.parse(subscriptionsFilePath);
 
         SparkSession spark = SparkSession
