@@ -190,38 +190,59 @@ public class FeedReaderMain {
         );
 
         // Etapa 1: Extraer SOLO las entidades definidas en Heuristic.categoryMap
-        JavaRDD<Tuple2<String, String>> entityCategoryPairs = articlesRDD.flatMap(
-            article -> {
-                // QuickHeuristic quickHeuristic = new QuickHeuristic(); // YA NO SE USA PARA DETECTAR
-                List<Tuple2<String, String>> pairs = new ArrayList<>();
-                String textContent = article.getTitle() + " " + article.getText();
-                String cleanedText = textContent;
-                for (char c : CHARS_TO_REMOVE.toCharArray()) {
-                    cleanedText = cleanedText.replace(String.valueOf(c), "");
+                JavaRDD<Tuple2<String, String>> entityCategoryPairs = articlesRDD.flatMap(article -> {
+            Heuristic heuristic;
+            switch (finalHeuristicType) {
+                case "QUICK":
+                    heuristic = new QuickHeuristic();
+                    break;
+                case "RANDOM":
+                    heuristic = new RandomHeuristic();
+                    break;
+                default:
+                    // Para el modo DEFAULT, podemos usar una heurística que siempre devuelva true
+                    // para palabras que están en el mapa, o manejarlo como un caso especial.
+                    heuristic = null; // Lo manejaremos como caso especial.
+                    break;
+            }
+
+            List<Tuple2<String, String>> pairs = new ArrayList<>();
+            String textContent = article.getTitle() + " " + article.getText();
+            String cleanedText = textContent;
+            for (char c : CHARS_TO_REMOVE.toCharArray()) {
+                cleanedText = cleanedText.replace(String.valueOf(c), "");
+            }
+
+            for (String word : cleanedText.split("\\s+")) {
+                String trimmedWord = word.trim();
+                if (trimmedWord.isEmpty()) {
+                    continue;
                 }
 
-                for (String word : cleanedText.split("\\s+")) {
-                    String trimmedWord = word.trim();
-                    if (!trimmedWord.isEmpty()) {
-                        // Verificar DIRECTAMENTE si la palabra es una clave en categoryMap
-                        NamedEntity neDetails = Heuristic.categoryMap.get(trimmedWord);
-                        if (neDetails != null) {
-                            // La palabra es una de las entidades propuestas por el laboratorio
-                            pairs.add(new Tuple2<>("ENTITY_" + trimmedWord, "OCCURRENCE")); // Contar la entidad
-                            if (neDetails.getCategory() != null) {
-                                pairs.add(new Tuple2<>("CAT_" + neDetails.getCategory(), "COUNT"));
-                            }
-                            if (neDetails.getTopic() != null) {
-                                pairs.add(new Tuple2<>("TOPIC_" + neDetails.getTopic(), "COUNT"));
-                            }
+                boolean isEntityCandidate;
+                if (heuristic != null) {
+                    isEntityCandidate = heuristic.isEntity(trimmedWord); // Usa -qh o -rh
+                } else {
+                    isEntityCandidate = Heuristic.categoryMap.containsKey(trimmedWord); // Modo DEFAULT
+                }
+
+                if (isEntityCandidate) {
+                    // Independientemente de cómo se detectó, buscamos sus detalles en el mapa central
+                    NamedEntity neDetails = Heuristic.categoryMap.get(trimmedWord);
+                    if (neDetails != null) { // Solo contamos si tenemos sus detalles
+                        pairs.add(new Tuple2<>("ENTITY_" + neDetails.getName(), "OCCURRENCE"));
+                        if (neDetails.getCategory() != null) {
+                            pairs.add(new Tuple2<>("CAT_" + neDetails.getCategory(), "COUNT"));
                         }
-                        // Si no está en categoryMap, simplemente la ignoramos.
+                        if (neDetails.getTopic() != null) {
+                            pairs.add(new Tuple2<>("TOPIC_" + neDetails.getTopic(), "COUNT"));
+                        }
                     }
                 }
-                return pairs.iterator();
             }
-        );
-
+            return pairs.iterator();
+        });
+        
         // Etapa 2: Contar ocurrencias (sin cambios)
         JavaPairRDD<String, Integer> countsRDD = entityCategoryPairs
             .mapToPair(pair -> new Tuple2<>(pair._1, 1))
