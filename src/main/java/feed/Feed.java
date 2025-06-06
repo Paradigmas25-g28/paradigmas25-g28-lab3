@@ -6,6 +6,7 @@ import java.util.List;
 
 import java.io.File;
 import java.io.Serializable;
+import utils.AnsiColors;
 
 import feed.Article;
 import feed.Feed;
@@ -94,53 +95,6 @@ public class Feed implements Serializable {
 
     f.prettyPrint();
 
-  }
-
-  // Esta funcion es re contra bobina, lo que hace es tomar un SingleSubscription
-  // y devuelve un FEED SUPREMO armado con los url de cada SingleSubscription
-  public static Feed buildFeed(SingleSubscription subscription) {
-
-    Feed feedSupremo = null;
-    httpRequester requester = new httpRequester();
-
-    String urlType = subscription.getUrlType().toLowerCase();
-
-    for (String topic : subscription.getUrlParams()) {
-      try {
-
-        String urlFormat = subscription.getUrl();
-        String finalUrl = String.format(urlFormat, topic);
-
-        if (urlType.equals("rss")) {
-          File rssXml = requester.getFeedRssToFile(finalUrl);
-          RssParser rssParser = new RssParser();
-          rssParser.parse(rssXml.getPath());
-
-          String siteName = subscription.getUrlType().toUpperCase() + " - " + topic;
-          feedSupremo = new Feed(siteName);
-
-          for (Article article : rssParser.getArticles()) {
-            feedSupremo.addArticle(article);
-          }
-        }
-        if (urlType.equals("reddit")) {
-          File redditJson = requester.getFeedRedditToFile(finalUrl);
-          RedditParser redditParser = new RedditParser();
-          redditParser.parse(redditJson.getPath());
-
-          String siteName = subscription.getUrlType().toUpperCase() + " - " + topic;
-          feedSupremo = new Feed(siteName);
-
-          for (Article article : redditParser.getArticles()) {
-            feedSupremo.addArticle(article);
-          }
-        }
-      } catch (Exception e) {
-        System.err.println("Error al procesar el feed Reddit para el topic: " + topic);
-        e.printStackTrace();
-      }
-    }
-    return feedSupremo;
   }
 
 }
